@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    /* File Layout - UNCOMMENT THESE */
+    "rootDir": "./src",            // Where your TS files live
+    "outDir": "./dist",           // Where compiled JS will go
+
+    /* Environment Settings */
+    "module": "CommonJS",         // Matches your package.json "type": "commonjs"
+    "target": "ES2022",           // Good balance for modern Node.js features
+    "lib": ["ESNext"],
+    "types": ["node"],            // Ensures Node globals like __dirname are recognized
+
+    /* Interop (CRITICAL for Express) */
+    "esModuleInterop": true,      // Allows: import express from 'express'
+    "forceConsistentCasingInFileNames": true,
+
+    /* Stricter Typechecking */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,         // Speeds up compilation by skipping library files
+
+    /* Backend specific - Remove JSX if not using React on the backend */
+    // "jsx": "react-jsx",        // Unless you're doing SSR with React, you don't need this
+    
+    "sourceMap": true,
+    "declaration": true
+  },
+  "include": ["src/**/*"],        // Tell TS to only look in your src folder
+  "exclude": ["node_modules"]
+}
