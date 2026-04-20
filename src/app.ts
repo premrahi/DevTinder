@@ -6,18 +6,22 @@ const app = express();
 
 
 
-app.use("/test", (req: Request, res: Response) => {
+app.get("/test", (req: Request, res: Response) => {
     res.send("test test test!");
 });
 
-app.use("/hello", (req: Request, res: Response) => {
+app.post("/posting" , async (req: Request , res: Response) => {
+    res.send("this is a post api call")
+})
+
+app.get("/hello", (req: Request, res: Response) => {
     res.send("hello hello hello!");
 });
 
-app.use("/bye", (req: Request, res: Response) => {
+app.delete("/del", (req: Request, res: Response) => {
     res.send("bye bye bye!");
 });
-app.use("/", (req: Request, res: Response) => {
+app.get("/", (req: Request, res: Response) => {
     res.send("hello from the dashboard!");
 });
 
