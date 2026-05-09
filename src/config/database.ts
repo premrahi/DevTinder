@@ -1,10 +1,15 @@
-import mongoose from 'mongoose' ;
+import mongoose from "mongoose";
+require("dotenv").config();
 
-const connectDB = async() =>{
-    await mongoose.connect(  
-        "mongodb+srv://gulabJaamun:Bhq8zeOk5KDM5zv1@gulabjaamun.id9ulo7.mongodb.net/devTinder"
-    )
+
+if (!process.env.MONGODB_URI) {
+  throw new Error("MONGODB_URI is not defined in environment variables");
 }
+const db_uri: string = process.env.MONGODB_URI;
 
 
-module.exports = connectDB ;
+const connectDB = async () => {
+  await mongoose.connect(db_uri);
+};
+
+module.exports = connectDB;
