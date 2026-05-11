@@ -9,7 +9,9 @@ const db_uri: string = process.env.MONGODB_URI;
 
 
 const connectDB = async () => {
-  await mongoose.connect(db_uri);
+  await mongoose.connect(db_uri, {
+    autoIndex: true, 
+  });
 };
 
 module.exports = connectDB;
