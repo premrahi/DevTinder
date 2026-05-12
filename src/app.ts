@@ -3,20 +3,58 @@ import { NextFunction, Request, Response, ErrorRequestHandler } from "express";
 import { ReturnDocument } from "mongodb";
 const connectDB = require("./config/database");
 const userModel = require("./models/user");
+const { validateSignupData } = require("./utils/validation");
+const bcrypt = require("bcrypt");
 
 const app = express();
 app.use(express.json());
 
 //add user to database
 app.post("/signup", async (req: Request, res: Response) => {
-  //creating a new instance of user model
-  const user = new userModel(req.body);
-
   try {
+    //validation
+    validateSignupData(req);
+
+    //Encryption of password
+    const { firstName, lastName, emailId, password } = req.body;
+    const passwordHash = await bcrypt.hash(password, 10);
+    console.log(passwordHash);
+
+    //creating a new instance of user model
+    const user = new userModel({
+      firstName,
+      lastName,
+      emailId,
+      password: passwordHash,
+    });
     await user.save();
     res.send("user added successfully!");
   } catch (err) {
     res.send("something went wrong " + err);
+  }
+});
+
+//login api
+app.post("/login", async (req: Request, res: Response) => {
+  try {
+    const { emailId, password } = req.body;
+    //email validation
+
+    const user = await userModel.findOne({ emailId: emailId });
+    if (!user) {
+      throw new Error("Email not found!");
+    }
+
+    //password check
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (isPasswordValid) {
+      res.send("user login successful!");
+    } else {
+      throw new Error("Incorrect Password!");
+    }
+  } catch (err) {
+    res.send("something wen wrong! " + err);
   }
 });
 
@@ -75,17 +113,17 @@ app.patch("/updateUser/:userId", async (req: Request, res: Response) => {
     ];
 
     const isUpdateAllowed = Object.keys(data).every((k) =>
-      ALLOWED_UPDATES.includes(k)
+      ALLOWED_UPDATES.includes(k),
     );
 
-    if(data?.skills.length > 10){
-      throw new Error("skills can not be more than 10") ;
+    if (data?.skills.length > 10) {
+      throw new Error("skills can not be more than 10");
     }
-    if(!isUpdateAllowed){
-      throw new Error("Update not allowed")
+    if (!isUpdateAllowed) {
+      throw new Error("Update not allowed");
     }
 
-    const user = await userModel.findOneAndUpdate({_id: userId }, data, {
+    const user = await userModel.findOneAndUpdate({ _id: userId }, data, {
       ReturnDocument: "before",
       runValidators: true,
     });
