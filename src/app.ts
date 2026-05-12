@@ -60,43 +60,63 @@ app.delete("/deleteUser", async (req: Request, res: Response) => {
 });
 
 //update data of an user
-app.patch("/updateUser", async (req: Request, res: Response) => {
-  const userId = req.body._id;
+app.patch("/updateUser/:userId", async (req: Request, res: Response) => {
+  const userId = req.params?.userId;
   const data = req.body;
 
   try {
-    const user = await userModel.findOneAndUpdate({ userId }, data,
-      {
-        ReturnDocument:"after",
-        runValidators:true ,
-      }
+    const ALLOWED_UPDATES = [
+      "photoUrl",
+      "about",
+      "skills",
+      "gender",
+      "age",
+      "password",
+    ];
+
+    const isUpdateAllowed = Object.keys(data).every((k) =>
+      ALLOWED_UPDATES.includes(k)
     );
+
+    if(data?.skills.length > 10){
+      throw new Error("skills can not be more than 10") ;
+    }
+    if(!isUpdateAllowed){
+      throw new Error("Update not allowed")
+    }
+
+    const user = await userModel.findOneAndUpdate({_id: userId }, data, {
+      ReturnDocument: "before",
+      runValidators: true,
+    });
     console.log(user);
     res.send("user data updated successfully!");
-  } catch(err:any) {
-    res.status(400).send("update failed!" + err.message);
+  } catch (err: any) {
+    res.status(400).send("update failed! " + err.message);
   }
 });
-
 
 connectDB()
   .then(() => {
     console.log("✅ Database connected successfully");
 
-    userModel.syncIndexes()
+    userModel
+      .syncIndexes()
       .then(() => {
         console.log("💎 Unique indexes are verified and active.");
-        
+
         // ONLY start the server once indexes are ready
         app.listen(3000, () => {
           console.log("🚀 Server is successfully listening on port 3000");
         });
       })
-      .catch((err:Error) => {
+      .catch((err: Error) => {
         console.error("❌ INDEX SYNC ERROR:", err.message);
-        console.log("Tip: If you have duplicate emails in the DB, this will fail!");
+        console.log(
+          "Tip: If you have duplicate emails in the DB, this will fail!",
+        );
       });
   })
-  .catch((err:Error) => {
+  .catch((err: Error) => {
     console.error("❌ DATABASE CONNECTION ERROR:", err.message);
   });
