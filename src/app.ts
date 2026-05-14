@@ -1,13 +1,16 @@
 const express = require("express");
-import { NextFunction, Request, Response, ErrorRequestHandler } from "express";
-import { ReturnDocument } from "mongodb";
+import { NextFunction, Request, Response } from "express";
 const connectDB = require("./config/database");
 const userModel = require("./models/user");
 const { validateSignupData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
-
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
+require("dotenv").config();
+const { UserAuth } = require("./middlewares/auth");
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 
 //add user to database
 app.post("/signup", async (req: Request, res: Response) => {
@@ -18,7 +21,7 @@ app.post("/signup", async (req: Request, res: Response) => {
     //Encryption of password
     const { firstName, lastName, emailId, password } = req.body;
     const passwordHash = await bcrypt.hash(password, 10);
-    console.log(passwordHash);
+    // console.log(passwordHash);
 
     //creating a new instance of user model
     const user = new userModel({
@@ -34,6 +37,19 @@ app.post("/signup", async (req: Request, res: Response) => {
   }
 });
 
+//profile api
+app.get("/profile", UserAuth, async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    if (!user) {
+      throw new Error("User does not exist!");
+    }
+    res.send(user);
+  } catch (error) {
+    res.send("ERROR!:" + error);
+  }
+});
+
 //login api
 app.post("/login", async (req: Request, res: Response) => {
   try {
@@ -42,60 +58,44 @@ app.post("/login", async (req: Request, res: Response) => {
 
     const user = await userModel.findOne({ emailId: emailId });
     if (!user) {
-      throw new Error("Email not found!");
+      throw new Error("Invalid credentials");
     }
 
     //password check
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (isPasswordValid) {
+      //assigning JWT token
+      const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY, {
+        expiresIn: "7d",
+      });
+
+      //sending JWT token in cookie
+      res.cookie("token", token);
+
       res.send("user login successful!");
     } else {
-      throw new Error("Incorrect Password!");
+      throw new Error("Invalid credentials");
     }
   } catch (err) {
-    res.send("something wen wrong! " + err);
+    res.send("ERROR!: " + err);
   }
 });
 
-// get data of one user
-app.get("/getUser", async (req: Request, res: Response) => {
-  const userEmail = req.body.emailId;
-  try {
-    const users = await userModel.find({
-      emailId: userEmail,
-    });
-    if (users.length === 0) {
-      res.status(404).send("user not found");
-    } else {
-      res.send(users);
+//sendConnectionRequest
+app.post(
+  "/sendConnectionRequest",
+  UserAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      console.log("Connection request sent!");
+      res.send(user.firstName + " has sent a Connection request sent!");
+    } catch (err) {
+      res.send("ERROR!" + err);
     }
-  } catch (err) {
-    res.send(err + "something went wrong");
-  }
-});
-
-//feed api - GET/FEED - get all the users from the database
-app.get("/feed", async (req: Request, res: Response) => {
-  try {
-    const users = await userModel.find({});
-    res.send(users);
-  } catch {
-    res.send("something went wrong");
-  }
-});
-
-//deleting a user by id
-app.delete("/deleteUser", async (req: Request, res: Response) => {
-  const userId = req.body.userId;
-
-  try {
-    const user = await userModel.findByIdAndDelete(userId);
-    res.send("user deleted successfully!");
-  } catch (err) {
-    res.send("something went wrong");
-  }
-});
+  },
+);
 
 //update data of an user
 app.patch("/updateUser/:userId", async (req: Request, res: Response) => {
