@@ -2,11 +2,17 @@ const express = require("express") ;
 import { Request,Response,NextFunction } from "express";
 const bcrypt = require("bcrypt") ;
 import { userModel } from "../models/user";
+import { now } from "mongoose";
 const { validateSignupData } = require("../utils/validation");
+const cookieParser = require("cookie-parser");
+
 
 
 
 const authRouter = express.Router() ;
+
+authRouter.use(cookieParser());
+
 
 //add user to database
 authRouter.post("/signup", async (req: Request, res: Response) => {
@@ -62,6 +68,13 @@ authRouter.post("/login", async (req: Request, res: Response) => {
     res.send("ERROR!: " + err);
   }
 });
+
+authRouter.post("/logout" ,async(req:Request , res:Response)=>{
+    res.cookie("token" ,null ,{
+        expires: new Date(Date.now()),
+    });
+    res.send("Logout successful!") ;
+})
 
 
 
