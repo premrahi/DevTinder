@@ -3,12 +3,11 @@ import { NextFunction, Request, Response } from "express";
 const connectDB = require("./config/database");
 const userModel = require("./models/user");
 const { validateSignupData } = require("./utils/validation");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
 const { UserAuth } = require("./middlewares/auth");
 const app = express();
+const bcrypt = require("bcrypt");
 app.use(express.json());
 app.use(cookieParser());
 
@@ -62,13 +61,11 @@ app.post("/login", async (req: Request, res: Response) => {
     }
 
     //password check
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await user.validatePassword(password) ;
 
     if (isPasswordValid) {
       //assigning JWT token
-      const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY, {
-        expiresIn: "7d",
-      });
+      const token =await user.getJWT() ;
 
       //sending JWT token in cookie
       res.cookie("token", token);

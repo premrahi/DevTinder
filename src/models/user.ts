@@ -1,5 +1,7 @@
 const validator = require("validator");
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
 const userSchema = mongoose.Schema(
   {
@@ -45,12 +47,13 @@ const userSchema = mongoose.Schema(
     },
     photoUrl: {
       type: String,
-      default:"https://www.citypng.com/public/uploads/preview/profile-user-round-white-icon-symbol-png-701751695033499brrbuebohc.png",
-      validate(value:any){
-        if(!validator.isURL(value)){
-          throw new Error("invalid photo url") ;
+      default:
+        "https://www.citypng.com/public/uploads/preview/profile-user-round-white-icon-symbol-png-701751695033499brrbuebohc.png",
+      validate(value: any) {
+        if (!validator.isURL(value)) {
+          throw new Error("invalid photo url");
         }
-      }
+      },
     },
     about: {
       type: String,
@@ -64,6 +67,31 @@ const userSchema = mongoose.Schema(
     timestamps: true,
   },
 );
+
+userSchema.methods.getJWT = async function () {
+  const user = this;
+
+  const token = await jwt.sign({ _id: this._id }, process.env.SECRET_KEY, {
+    expiresIn: "7d",
+  });
+
+  return token;
+};
+
+userSchema.methods.validatePassword = async function (
+  passwordInputByUser: string,
+) {
+  const user = this;
+
+  const passwordHash = user.password;
+
+  const isPasswordValid = await bcrypt.compare(
+    passwordInputByUser,
+    passwordHash ,
+  );
+
+  return isPasswordValid  ;
+};
 
 const userModel = mongoose.model("User", userSchema);
 module.exports = userModel;
