@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
-const userModel = require("../models/user");
+import { userModel } from "../models/user";
 
 declare global {
   namespace Express {
@@ -11,7 +11,7 @@ declare global {
   }
 }
 
-const UserAuth = async (req: Request, res: Response, next: NextFunction) => {
+export const UserAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     //read the token from req. cookies
     const { token } = req.cookies;
@@ -24,7 +24,7 @@ const UserAuth = async (req: Request, res: Response, next: NextFunction) => {
 
     const { _id } = decodedMessage;
 
-    const user = await userModel.findById(_id);
+    const user = await userModel.findById({_id:_id});
     if (!user) {
       throw new Error("user does not exist!");
     }
@@ -37,6 +37,6 @@ const UserAuth = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-module.exports = {
-  UserAuth,
-};
+// module.exports = {
+//   UserAuth,
+// };
