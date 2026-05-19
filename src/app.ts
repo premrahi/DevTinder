@@ -4,6 +4,7 @@ const cookieParser = require("cookie-parser");
 require("dotenv").config();
 const app = express();
 import { userModel } from "./models/user";
+import userRouter from "./routes/user";
 
 app.use(express.json());
 app.use(cookieParser());
@@ -17,6 +18,7 @@ const requestRouter = require("./routes/request")
 app.use("/" ,authRouter) ;
 app.use("/" ,profileRouter) ;
 app.use("/" ,requestRouter) ;
+app.use("/" ,userRouter) ;
 
 
 

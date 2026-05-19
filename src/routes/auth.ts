@@ -47,7 +47,7 @@ authRouter.post("/login", async (req: Request, res: Response) => {
 
     const user = await userModel.findOne({ emailId: emailId });
     if (!user) {
-      throw new Error("Invalid credentials");
+      return res.status(404).send("Invalid credentials");
     }
 
     //password check
@@ -62,7 +62,7 @@ authRouter.post("/login", async (req: Request, res: Response) => {
 
       res.send("user login successful!");
     } else {
-      throw new Error("Invalid credentials");
+      return res.status(401).send("Invalid credentials");
     }
   } catch (err) {
     res.send("ERROR!: " + err);
