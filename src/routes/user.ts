@@ -2,6 +2,7 @@ const express = require("express");
 import { Request, Response } from "express";
 import { UserAuth } from "../middlewares/auth";
 import connectionRequestModel from "../models/connectionRequest";
+import { userModel } from "../models/user";
 
 const userRouter = express.Router();
 
@@ -63,5 +64,45 @@ userRouter.get(
     }
   },
 );
+
+userRouter.get("/feed", UserAuth, async (req: Request, res: Response) => {
+  try {
+    // the user should see all the user cards except ->
+    // 0. his own card
+    // 1. his connections
+    // 2. ignored people
+    // 3. already send connection request to
+
+    const loggedInUser = req.user;
+
+    //find all the connection request (send + received)
+    const connectionRequest: any = await connectionRequestModel.find({
+      $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
+    }).select("fromUserId toUserId") ;
+
+    const hideUserFromFeed:any = new Set() ;
+    connectionRequest.forEach((req:any) => {
+      hideUserFromFeed.add(req.fromUserId.toString())
+      hideUserFromFeed.add(req.toUserId.toString())
+    })  
+
+
+
+    const users = await userModel.find({
+      $and:[
+        {_id : { $nin : Array.from(hideUserFromFeed)}},
+        {_id : { $ne : loggedInUser._id }}
+      ]
+    }).select(USER_SAFE_DATA) ;
+
+
+    // .select("firstName").populate("fromUserId" ,"firstName").populate("toUserId" ,"firstName")
+    
+
+    res.send(users) ;
+  } catch (err: any) {
+    res.status(400).json({ message: "Error: " + err });
+  }
+});
 
 export default userRouter;
