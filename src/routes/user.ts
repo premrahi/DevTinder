@@ -6,7 +6,7 @@ import { userModel } from "../models/user";
 
 const userRouter = express.Router();
 
-const USER_SAFE_DATA = "firstName lastName photoUrl about skills gender  ";
+const USER_SAFE_DATA = "firstName lastName photoUrl about skills gender age  ";
 
 //get all the connection request for the loggedIn user
 userRouter.get(
